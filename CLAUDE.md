@@ -14,6 +14,50 @@ listening analytics, album/song ratings & reviews, lists, and vinyl collection l
 
 ---
 
+## Project status & progress (last updated 2026-06-19)
+
+**Where things stand:** the app is fully built and runs on the **iPhone 17 simulator** and is
+installed on a **physical iPhone 14**. All four feature areas work with local persistence and seeded
+sample data. Spotify is fully coded but **not yet connected** (the user hasn't registered a Spotify
+developer app / entered a Client ID yet).
+
+**What's built (v1, all functional):**
+- **Models/** — SwiftData: `Artist`, `Album`, `Track`, `VinylCopy`, `PlayRecord`, `Rating`,
+  `Review`, `ListEntry`, plus `Enums`, `Store` (LibraryActions helper), `SampleData` (first-launch seed).
+- **Services/** — `SpotifyConfig`, `Keychain`, `SpotifyAuth` (Authorization Code + PKCE via
+  `ASWebAuthenticationSession`), `SpotifyAPIClient`, `SyncService` (recently-played → PlayRecords),
+  `ImportService` (Spotify data-export JSON → PlayRecords), `AnalyticsEngine`, `SpotifyController`.
+- **Features/** — five tabs: **Stats** (analytics + Swift Charts), **Library** (ratings/reviews),
+  **Lists** (want-to-listen / good, drag-reorder + sort), **Vinyl** (collection grid + add record),
+  **Settings** (connect Spotify, sync, import, setup guide). Shared unified Album/Track **Detail**
+  screen handles rating + review + lists + vinyl copies.
+- **Vinyl is a first-class album:** owning a record = attaching a `VinylCopy` to an `Album`; that
+  album is rated/reviewed/listed like any other. The Vinyl tab is a filtered library view.
+
+**Key design constraint (Spotify API, post-2024):** no full-history endpoint and audio-features/
+recommendations were retired for new apps. Analytics are built from top tracks/artists + accumulated
+`recently-played` syncs + an imported "Extended streaming history" data export. No in-app playback.
+
+**Operational facts / hard-won gotchas:**
+- **Build ≠ install on device.** Use Xcode **Run ▶**, or push the signed build:
+  `xcrun devicectl device install app --device 7FD2EA75-113A-54EF-83CC-EA0A66CB5B18 <path-to>.app`
+  (that UDID is the user's iPhone 14). Find the build at
+  `~/Library/Developer/Xcode/DerivedData/VinylCafe-*/Build/Products/Debug-iphoneos/VinylCafe.app`.
+- **Free Apple ID signing expires every ~7 days** → "App not available"; rebuild + reinstall to refresh.
+- This automated shell **can't reach the macOS GUI keychain** (hit this with codesign and with git
+  HTTPS auth). Device code-signing must run via the user's Xcode; git auth goes through `gh`.
+- **`gh` CLI is installed** at `~/.local/bin/gh` and authenticated as `alrishachen` (scopes: repo,
+  workflow). It's the credential path for pushes. Not on bare PATH unless the user adds
+  `~/.local/bin` to `~/.zshrc`.
+
+**Backlog / next steps:**
+- Connect Spotify for real (user does the 5-min dev-app registration in `SETUP.md`).
+- Custom **named** lists in the UI (the `ListEntry` model already supports `kind == .custom`).
+- Tap-through from Stats top-lists into the Detail screen to rate.
+- Album artwork caching; per-genre analytics.
+
+---
+
 ## Development model: a three-agent system
 
 All feature work in this repo flows through three roles. Each is a dispatchable subagent under
